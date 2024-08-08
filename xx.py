@@ -4,7 +4,7 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from PIL import Image, ImageDraw, ImageFont
 
 # حدد رمز الوصول الخاص بك من BotFather
-TOKEN = 'YOUR_BOT_TOKEN'
+TOKEN = '7328901491:AAGoXuqwNQg7POYIQJF602Pb6eoo8dw7vyA'
 
 # حدد المسارات للخلفيات والخطوط
 BASE_PATH = os.path.abspath(".")
