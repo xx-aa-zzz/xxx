@@ -1,5 +1,4 @@
 python-telegram-bot
 pillow
-os
 os.path
 random
