@@ -61,12 +61,10 @@ def handle_photo(update, context):
         context.bot.send_photo(chat_id=update.effective_chat.id, photo=f)
 
 def main():
-    updater = Updater(TOKEN, use_context=True)
+    updater = Updater(TOKEN)
     dispatcher = updater.dispatcher
 
-    # إضافة المعالجات للأوامر والرسائل
-    dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(MessageHandler(Filters.photo, handle_photo))
+    # Add the handlers here
 
     updater.start_polling()
     updater.idle()
