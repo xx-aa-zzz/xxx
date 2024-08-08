@@ -1,92 +1,75 @@
-import cv2
 import os
-import shutil
 import random
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from PIL import Image, ImageDraw, ImageFont
-from telegram import Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 
-# توكن البوت الخاص بك
-TOKEN = '7328901491:AAGoXuqwNQg7POYIQJF602Pb6eoo8dw7vyA'
+# حدد رمز الوصول الخاص بك من BotFather
+TOKEN = 'YOUR_BOT_TOKEN'
 
-# الوظيفة المسؤولة عن بدء المحادثة
-def start(update: Update, context: CallbackContext):
-    update.message.reply_text("مرحبًا! أرسل لي فيديو وسأقوم بإنشاء صورة مصغرة منه.")
+# حدد المسارات للخلفيات والخطوط
+BASE_PATH = os.path.abspath(".")
+BACKGROUND_DIR = os.path.join(BASE_PATH, "backgrounds")
+FONT_DIR = os.path.join(BASE_PATH, "font")
 
-# الوظيفة المسؤولة عن استقبال الفيديو ومعالجته
-def handle_video(update: Update, context: CallbackContext):
-    video_file = update.message.video
-    video_path = video_file.get_file().download()
+def start(update, context):
+    context.bot.send_message(chat_id=update.effective_chat.id, text="مرحبا! أنا بوت لإنشاء صور مصغرة. أرسل لي صورة وسأضيف لها خلفية عشوائية.")
 
-    # استدعاء وظيفة معالجة الفيديو
-    thumbnail_path = process_video(video_path, "النص الخاص بك هنا")
-    
-    if thumbnail_path:
-        # إرسال الصورة المصغرة للمستخدم
-        update.message.reply_photo(photo=open(thumbnail_path, 'rb'))
+def add_background(img, font_path):
+    # فتح الصورة
+    img = Image.open(img).convert("RGBA")
+
+    # إضافة خلفية عشوائية
+    background = Image.open(os.path.join(BACKGROUND_DIR, random.choice(os.listdir(BACKGROUND_DIR)))).convert("RGBA")
+    W, H = (1280, 720)
+    background = background.resize((W, H), Image.Resampling.LANCZOS)
+
+    # إضافة الصورة إلى الخلفية
+    x = random.uniform(0, 1)
+    if x >= 0.5:
+        img = img.rotate(25)
     else:
-        update.message.reply_text("حدث خطأ أثناء معالجة الفيديو.")
+        img = img.transpose(method=Image.FLIP_LEFT_RIGHT)
+        img = img.rotate(-25)
 
-# الوظيفة التي تقوم بمعالجة الفيديو وإنشاء الصورة المصغرة
-def process_video(video_path, text):
-    try:
-        # مسار حفظ الصورة المصغرة
-        thumbnail_dir = 'thumbnails'
-        os.makedirs(thumbnail_dir, exist_ok=True)
-        thumbnail_path = os.path.join(thumbnail_dir, 'thumbnail.jpg')
+    newimg = Image.new('RGBA', size=(W, H), color=(0, 0, 0, 0))
+    newimg.paste(background, (0, 0))
+    newimg.paste(img, (-120, -120), img)
 
-        # قراءة الفيديو
-        cap = cv2.VideoCapture(video_path)
-        face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-        smile_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_smile.xml')
+    # إضافة نص عشوائي
+    title_font = ImageFont.truetype(font_path, 80)
+    title_text = "نص عشوائي"
+    image_editable = ImageDraw.Draw(newimg)
+    bbox = image_editable.textbbox((0, 0), title_text, font=title_font)
+    w, h = bbox[2] - bbox[0], bbox[3] - bbox[1]
+    image_editable.text(((W - w) / 2, (H - h) - 75), title_text, (255, 255, 255), font=title_font, stroke_width=10, stroke_fill=(0, 0, 0))
 
-        while cap.isOpened():
-            ret, frame = cap.read()
-            if not ret:
-                break
-            
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            faces = face_cascade.detectMultiScale(gray, 1.3, 5)
-            
-            for (x, y, w, h) in faces:
-                roi_gray = gray[y:y+h, x:x+w]
-                roi_color = frame[y:y+h, x:x+w]
-                smiles = smile_cascade.detectMultiScale(roi_gray, 1.8, 20)
+    return newimg
 
-                for (sx, sy, sw, sh) in smiles:
-                    # اقتصاص الوجه
-                    face_img = frame[y:y+h, x:x+w]
-                    face_pil = Image.fromarray(cv2.cvtColor(face_img, cv2.COLOR_BGR2RGB))
+def handle_photo(update, context):
+    # تحميل الصورة المرسلة
+    photo_file = update.message.photo[-1].get_file()
+    photo_file.download("image.jpg")
 
-                    # إضافة خلفية ونص
-                    background = Image.new('RGB', (w, h + 50), (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
-                    background.paste(face_pil, (0, 50))
-                    
-                    draw = ImageDraw.Draw(background)
-                    font = ImageFont.load_default()
-                    draw.text((10, 10), text, font=font, fill=(255, 255, 255))
-                    
-                    background.save(thumbnail_path)
-                    return thumbnail_path
-        
-        cap.release()
-        return None
+    # إضافة خلفية عشوائية
+    font_path = os.path.join(FONT_DIR, random.choice(os.listdir(FONT_DIR)))
+    output_image = add_background("image.jpg", font_path)
 
-    except Exception as e:
-        print(f"Error processing video: {e}")
-        return None
+    # إرسال الصورة النهائية
+    with open("output.jpg", "wb") as f:
+        output_image.save(f, "JPEG")
+    with open("output.jpg", "rb") as f:
+        context.bot.send_photo(chat_id=update.effective_chat.id, photo=f)
 
-# الوظيفة الرئيسية لتشغيل البوت
 def main():
     updater = Updater(TOKEN, use_context=True)
-    dp = updater.dispatcher
+    dispatcher = updater.dispatcher
 
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(MessageHandler(Filters.video, handle_video))
+    # إضافة المعالجات للأوامر والرسائل
+    dispatcher.add_handler(CommandHandler("start", start))
+    dispatcher.add_handler(MessageHandler(Filters.photo, handle_photo))
 
     updater.start_polling()
     updater.idle()
 
 if __name__ == '__main__':
     main()
-  
