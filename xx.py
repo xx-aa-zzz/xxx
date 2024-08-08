@@ -1,6 +1,6 @@
 import os
 import random
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram.ext import Updater, CommandHandler, MessageHandler, filters
 from PIL import Image, ImageDraw, ImageFont
 
 # حدد رمز الوصول الخاص بك من BotFather
