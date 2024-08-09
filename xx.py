@@ -3,8 +3,8 @@ from rembg import remove
 from PIL import Image
 import io
 
-# استبدل 'YOUR_API_ID' و 'YOUR_API_HASH' و 'YOUR_BOT_TOKEN' بالقيم الفعلية الخاصة بك
-api_id = '26222032'
+# بيانات الاعتماد الخاصة بك
+api_id = 26222032
 api_hash = 'd7969684a520bd4dcb36701ac48be730'
 bot_token = '7328901491:AAGoXuqwNQg7POYIQJF602Pb6eoo8dw7vyA'
 
@@ -26,9 +26,9 @@ async def remove_bg(event):
         input_image = Image.open(io.BytesIO(original_image))
         output_image = remove(input_image)
 
-        # حفظ الصورة بدون خلفية في الذاكرة مع تحديد الصيغة بشكل صريح
+        # حفظ الصورة بدون خلفية في الذاكرة بصيغة JPG
         img_byte_arr = io.BytesIO()
-        output_image.save(img_byte_arr, format='PNG')  # أو 'JPEG' حسب الحاجة
+        output_image.save(img_byte_arr, format='JPEG') 
         img_byte_arr = img_byte_arr.getvalue()
 
         # إرسال الصورة بدون خلفية مع تحديد نوع الملف
