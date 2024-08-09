@@ -26,6 +26,10 @@ async def remove_bg(event):
         input_image = Image.open(io.BytesIO(original_image))
         output_image = remove(input_image)
 
+        # تحويل الصورة إلى RGB إذا كانت بصيغة RGBA
+        if output_image.mode in ('RGBA', 'P'): 
+            output_image = output_image.convert('RGB') 
+
         # حفظ الصورة بدون خلفية في الذاكرة بصيغة JPG
         img_byte_arr = io.BytesIO()
         output_image.save(img_byte_arr, format='JPEG') 
@@ -39,3 +43,4 @@ async def remove_bg(event):
 
 client.start(bot_token=bot_token)
 client.run_until_disconnected()
+    
