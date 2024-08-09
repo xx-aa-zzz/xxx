@@ -137,13 +137,14 @@ async def create_image(event, user_id):
         # إضافة النص على الصورة
         draw.text(position, user_text, font=font, fill=font_color)
 
-        # حفظ الصورة المصغرة
+        # حفظ الصورة المصغرة بتنسيق JPG
         output = io.BytesIO()
-        photo_data.save(output, format='PNG')
+        photo_data = photo_data.convert('RGB')  # تحويل إلى RGB لضمان التوافق مع JPG
+        photo_data.save(output, format='JPEG', quality=95)  # استخدام تنسيق JPEG مع جودة عالية
         output.seek(0)
 
         # إرسال الصورة المعدلة للمستخدم
-        await bot.send_file(event.chat_id, output, caption="تم إنشاء الصورة المصغرة:", file_name="thumbnail.png")
+        await bot.send_file(event.chat_id, output, caption="تم إنشاء الصورة المصغرة:", file_name="thumbnail.jpg")
 
         # تنظيف بيانات المستخدم
         del user_data[user_id]
