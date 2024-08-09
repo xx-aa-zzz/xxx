@@ -1,4 +1,3 @@
 Telethon
 Pillow
 rembg
-io
