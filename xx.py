@@ -1,12 +1,16 @@
+)
+
+client.run_until_disconnected()
+        
 from telethon import TelegramClient, events
 from telethon.tl.types import DocumentAttributeFilename
 from PIL import Image, ImageDraw, ImageFont
 import io
 
 # إعدادات البوت
-api_id = '26222032'
-api_hash = 'd7969684a520bd4dcb36701ac48be730'
-bot_token = '7328901491:AAGoXuqwNQg7POYIQJF602Pb6eoo8dw7vyA'
+api_id = 'YOUR_API_ID'
+api_hash = 'YOUR_API_HASH'
+bot_token = 'YOUR_BOT_TOKEN'
 
 client = TelegramClient('thumbnail_bot', api_id, api_hash).start(bot_token=bot_token)
 
@@ -45,9 +49,9 @@ async def handle_message(event):
         font = ImageFont.truetype(io.BytesIO(user_font), size=50)
         
         # حساب حجم النص وتحديد الموقع
-        text_width, text_height = draw.textsize(user_text, font=font)
-        width, height = image.size
-        position = ((width - text_width) // 2, (height - text_height) // 2)
+text_width, text_height = draw.textbbox((0, 0), user_text, font=font)[2:]
+width, height = image.size
+position = ((width - text_width) // 2, (height - text_height) // 2)
         
         # إضافة النص للصورة
         draw.text(position, user_text, font=font, fill="white")
@@ -69,4 +73,4 @@ async def handle_message(event):
         await event.reply("يرجى التأكد من إرسال صورة، ملف خط (.ttf)، ونص.")
 
 client.run_until_disconnected()
-        
+    
