@@ -1,46 +1,41 @@
-from telethon import TelegramClient, events
-from rembg import remove
-from PIL import Image
-import io
+import telegram
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from gemini_python_api import GeminiAPI
 
-# بيانات الاعتماد الخاصة بك
-api_id = 26222032
-api_hash = 'd7969684a520bd4dcb36701ac48be730'
-bot_token = '7328901491:AAGoXuqwNQg7POYIQJF602Pb6eoo8dw7vyA'
+# بيانات اعتماد Gemini API
+GEMINI_API_KEY = 'AIzaSyAO1n7OWzbpFaNuEuNlDwkNampa_n-II40'
+GEMINI_API_SECRET = '' # قد تحتاج إلى مفتاح سري، تحقق من وثائق Gemini API
 
-client = TelegramClient('remove_bg_bot', api_id, api_hash)
+# رمز بوت Telegram
+BOT_TOKEN = '7328901491:AAGoXuqwNQg7POYIQJF602Pb6eoo8dw7vyA'
 
-@client.on(events.NewMessage(pattern='/start'))
-async def start(event):
-    await event.respond('مرحبًا! أرسل لي صورة وسأزيل الخلفية منها.')
+# استبدل 'your_gemini_function' بالدالة التي تتفاعل مع Gemini API
+def your_gemini_function(user_input):
+    gemini_api = GeminiAPI(GEMINI_API_KEY, GEMINI_API_SECRET) # قم بتوفير المفتاح السري إذا لزم الأمر
+    response = gemini_api.generate_text(user_input)
+    return response.text
 
-@client.on(events.NewMessage(pattern='/?'))
-async def remove_bg(event):
-    if event.photo:
-        await event.respond('جاري العمل على صورتك...')
-        
-        # تحميل الصورة
-        original_image = await event.download_media(file=bytes)
+# تعريف الأوامر التي يستجيب لها البوت
+def start(update, context):
+    update.message.reply_text('مرحباً! كيف يمكنني مساعدتك اليوم؟')
 
-        # إزالة الخلفية
-        input_image = Image.open(io.BytesIO(original_image))
-        output_image = remove(input_image)
+def echo(update, context):
+    user_input = update.message.text
+    gemini_response = your_gemini_function(user_input)
+    update.message.reply_text(gemini_response)
 
-        # تحويل الصورة إلى RGB إذا كانت بصيغة RGBA
-        if output_image.mode in ('RGBA', 'P'): 
-            output_image = output_image.convert('RGB') 
+def main():
+    updater = Updater(BOT_TOKEN, use_context=True)
+    dp = updater.dispatcher
 
-        # حفظ الصورة بدون خلفية في الذاكرة بصيغة JPG
-        img_byte_arr = io.BytesIO()
-        output_image.save(img_byte_arr, format='JPEG') 
-        img_byte_arr = img_byte_arr.getvalue()
+    # تسجيل الأوامر التي يستجيب لها البوت
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
 
-        # إرسال الصورة بدون خلفية مع تحديد نوع الملف
-        await event.respond(file=img_byte_arr, message='الصورة بدون خلفية:')
+    # بدء تشغيل البوت
+    updater.start_polling()
+    updater.idle()
 
-    else:
-        await event.respond('الرجاء إرسال صورة.')
-
-client.start(bot_token=bot_token)
-client.run_until_disconnected()
+if __name__ == '__main__':
+    main()
     
