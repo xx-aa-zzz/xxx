@@ -26,13 +26,14 @@ async def remove_bg(event):
         input_image = Image.open(io.BytesIO(original_image))
         output_image = remove(input_image)
 
-        # حفظ الصورة بدون خلفية في الذاكرة
+        # حفظ الصورة بدون خلفية في الذاكرة مع تحديد الصيغة بشكل صريح
         img_byte_arr = io.BytesIO()
-        output_image.save(img_byte_arr, format='PNG')
+        output_image.save(img_byte_arr, format='PNG')  # أو 'JPEG' حسب الحاجة
         img_byte_arr = img_byte_arr.getvalue()
 
-        # إرسال الصورة بدون خلفية
-        await event.respond(file=img_byte_arr)
+        # إرسال الصورة بدون خلفية مع تحديد نوع الملف
+        await event.respond(file=img_byte_arr, message='الصورة بدون خلفية:')
+
     else:
         await event.respond('الرجاء إرسال صورة.')
 
