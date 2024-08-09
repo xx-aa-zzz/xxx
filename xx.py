@@ -1,5 +1,5 @@
 import telegram
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram.ext import Updater, CommandHandler, MessageHandler, filters
 from gemini_python_api import GeminiAPI
 
 # بيانات اعتماد Gemini API
@@ -30,7 +30,7 @@ def main():
 
     # تسجيل الأوامر التي يستجيب لها البوت
     dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
+    dp.add_handler(MessageHandler(filters.text & ~filters.command, echo)) # تم تغيير Filters إلى filters
 
     # بدء تشغيل البوت
     updater.start_polling()
