@@ -68,8 +68,8 @@ async def handle_message(event):
         photo_data.save(output, format='PNG')
         output.seek(0)
 
-        # إرسال الصورة المعدلة للمستخدم
-        await event.respond("تم إنشاء الصورة المصغرة:", file=output)
+        # إرسال الصورة المعدلة للمستخدم مع اسم محدد
+        await event.respond("تم إنشاء الصورة المصغرة:", file=output, file_name="thumbnail.png")
 
     except Exception as e:
         await event.respond(f"حدث خطأ أثناء معالجة الصورة: {str(e)}")
