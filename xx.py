@@ -1,20 +1,11 @@
 from telethon import TelegramClient, events, Button
 from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageEnhance
 import io
-import os
-from dotenv import load_dotenv
-
-# تحميل المتغيرات البيئية
-load_dotenv()
 
 # إعدادات البوت
-API_ID = os.getenv('26222032')
-API_HASH = os.getenv('d7969684a520bd4dcb36701ac48be730')
-BOT_TOKEN = os.getenv('7328901491:AAGoXuqwNQg7POYIQJF602Pb6eoo8dw7vyA')
-
-# التحقق من وجود المتغيرات البيئية
-if not all([API_ID, API_HASH, BOT_TOKEN]):
-    raise ValueError("يرجى التأكد من تعيين جميع المتغيرات البيئية المطلوبة.")
+API_ID = 26222032
+API_HASH = 'd7969684a520bd4dcb36701ac48be730'
+BOT_TOKEN = '7328901491:AAGoXuqwNQg7POYIQJF602Pb6eoo8dw7vyA'
 
 # إنشاء العميل (Client) للبوت
 bot = TelegramClient('bot', API_ID, API_HASH).start(bot_token=BOT_TOKEN)
