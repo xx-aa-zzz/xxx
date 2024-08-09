@@ -69,7 +69,7 @@ async def handle_message(event):
         output.seek(0)
 
         # إرسال الصورة المعدلة للمستخدم مع اسم محدد
-        await event.respond("تم إنشاء الصورة المصغرة:", file=output, file_name="thumbnail.png")
+        await bot.send_file(event.chat_id, output, caption="تم إنشاء الصورة المصغرة:", file_name="thumbnail.png")
 
     except Exception as e:
         await event.respond(f"حدث خطأ أثناء معالجة الصورة: {str(e)}")
