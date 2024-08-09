@@ -1,3 +1,2 @@
-Telethon
-Pillow
-rembg
+gemini_python_api
+python-telegram-bot
