@@ -1,41 +1,49 @@
-import telegram
-from telegram.ext import Updater, CommandHandler, MessageHandler, filters
-from gemini_python_api import GeminiAPI
+import os
+import telebot
+import openai
+from telebot.types import Message
 
-# بيانات اعتماد Gemini API
-GEMINI_API_KEY = 'AIzaSyAO1n7OWzbpFaNuEuNlDwkNampa_n-II40'
-GEMINI_API_SECRET = '' # قد تحتاج إلى مفتاح سري، تحقق من وثائق Gemini API
-
-# رمز بوت Telegram
+# تعيين التوكن الخاص ببوت تليجرام
 BOT_TOKEN = '7328901491:AAGoXuqwNQg7POYIQJF602Pb6eoo8dw7vyA'
 
-# استبدل 'your_gemini_function' بالدالة التي تتفاعل مع Gemini API
-def your_gemini_function(user_input):
-    gemini_api = GeminiAPI(GEMINI_API_KEY, GEMINI_API_SECRET) # قم بتوفير المفتاح السري إذا لزم الأمر
-    response = gemini_api.generate_text(user_input)
-    return response.text
+# تعيين مفتاح API الخاص بـ ChatGPT
+openai.api_key = 'o.Wp9Sy0RxEDzRozPCFLvGoZEuS9IdJtsU'
 
-# تعريف الأوامر التي يستجيب لها البوت
-def start(update, context):
-    update.message.reply_text('مرحباً! كيف يمكنني مساعدتك اليوم؟')
+# إنشاء كائن البوت
+bot = telebot.TeleBot(BOT_TOKEN)
 
-def echo(update, context):
-    user_input = update.message.text
-    gemini_response = your_gemini_function(user_input)
-    update.message.reply_text(gemini_response)
+# قراءة محتوى ملف قواعد هندسة الأوامر
+with open('هندسة الاوامر.txt', 'r', encoding='utf-8') as file:
+    prompt_engineering_rules = file.read()
 
-def main():
-    updater = Updater(BOT_TOKEN, use_context=True)
-    dp = updater.dispatcher
-
-    # تسجيل الأوامر التي يستجيب لها البوت
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(MessageHandler(filters.text & ~filters.command, echo)) # تم تغيير Filters إلى filters
-
-    # بدء تشغيل البوت
-    updater.start_polling()
-    updater.idle()
-
-if __name__ == '__main__':
-    main()
+@bot.message_handler(func=lambda message: True)
+def handle_message(message: Message):
+    user_prompt = message.text
     
+    # إنشاء سياق للمطالبة المحسنة
+    system_message = f"""أنت مساعد متخصص في تحسين المطالبات (prompts). استخدم القواعد التالية لتحسين المطالبة المقدمة:
+
+{prompt_engineering_rules}
+
+قم بتحليل المطالبة المقدمة وتحسينها باستخدام هذه القواعد والتقنيات. قدم المطالبة المحسنة مع شرح موجز للتحسينات التي تم إجراؤها."""
+
+    try:
+        # استخدام ChatGPT لتحسين المطالبة
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": f"قم بتحسين هذه المطالبة: {user_prompt}"}
+            ]
+        )
+        
+        improved_prompt = response.choices[0].message.content
+        
+        # إرسال المطالبة المحسنة للمستخدم
+        bot.reply_to(message, improved_prompt)
+    except Exception as e:
+        bot.reply_to(message, f"عذرًا، حدث خطأ أثناء معالجة طلبك: {str(e)}")
+
+# تشغيل البوت
+if __name__ == '__main__':
+    bot.polling()
