@@ -1,74 +1,68 @@
 import os
+from pathlib import Path
 import telebot
-import openai
-from telebot.types import Message
+from openai import OpenAI
+import logging
+
+# إعداد التسجيل
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # تعيين التوكن الخاص ببوت تليجرام
 BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '7328901491:AAGoXuqwNQg7POYIQJF602Pb6eoo8dw7vyA')
+if not BOT_TOKEN:
+    logger.error("TELEGRAM_BOT_TOKEN is not set")
+    raise ValueError("TELEGRAM_BOT_TOKEN is not set")
 
-# تعيين مفتاح API الخاص بـ ChatGPT
-openai.api_key = os.getenv('OPENAI_API_KEY', 'o.Wp9Sy0RxEDzRozPCFLvGoZEuS9IdJtsU')
+# تعيين مفتاح API الخاص بـ OpenAI
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', 'o.Wp9Sy0RxEDzRozPCFLvGoZEuS9IdJtsU')
+if not OPENAI_API_KEY:
+    logger.error("OPENAI_API_KEY is not set")
+    raise ValueError("OPENAI_API_KEY is not set")
 
 # إنشاء كائن البوت
 bot = telebot.TeleBot(BOT_TOKEN)
 
-# قراءة قواعد هندسة الأوامر من متغير بيئي
-prompt_engineering_rules = os.getenv('PROMPT_ENGINEERING_RULES', '''
-العنصر الأول : المُهمّة الـTask
-المهمة الثانية : الفلترة
-المهمة الثالثة : الإستنباط
-العنصر الثاني : السياق الـ Context
-العنصر الثالث : الأدوار
-العنصر الرابع : مؤشر المخرجات Output Indicator
-العنصر الخامس : المدخلات Input Data
-
-تقنيات التلقين Prompting Techniques :
-
-1. Zero-Shot Prompting
-2. Few-Shot Prompting
-3. Chain-of-Thought Prompting
-4. Self-Consistency Prompting
-5. Role-Playing
-6. Instruction Refinement
-7. Constrained Generation
-8. Context Priming
-9. Template-based Prompting
-10. Analogical Reasoning
-11. Step-by-Step Analysis
-12. Multi-turn Querying
-13. Goal-oriented Prompting
-14. Self-verification
-15. Parallel Thinking
-''')
+# إنشاء عميل OpenAI
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 @bot.message_handler(func=lambda message: True)
-def handle_message(message: Message):
-    user_prompt = message.text
+def handle_message(message):
+    logger.info(f"Received message: {message.text}")
+    user_text = message.text
     
-    # إنشاء سياق للمطالبة المحسنة
-    system_message = f"""أنت مساعد متخصص في تحسين المطالبات (prompts). استخدم القواعد التالية لتحسين المطالبة المقدمة:
-
-{prompt_engineering_rules}
-
-قم بتحليل المطالبة المقدمة وتحسينها باستخدام هذه القواعد والتقنيات. قدم المطالبة المحسنة مع شرح موجز للتحسينات التي تم إجراؤها."""
-
     try:
-        # استخدام ChatGPT لتحسين المطالبة
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": system_message},
-                {"role": "user", "content": f"قم بتحسين هذه المطالبة: {user_prompt}"}
-            ]
+        logger.info("Sending request to OpenAI for text-to-speech conversion")
+        
+        # إنشاء مسار الملف الصوتي
+        speech_file_path = Path("speech.mp3")
+        
+        # تحويل النص إلى كلام
+        response = client.audio.speech.create(
+            model="tts-1",
+            voice="alloy",
+            input=user_text
         )
         
-        improved_prompt = response.choices[0].message.content
+        # حفظ الملف الصوتي
+        response.stream_to_file(speech_file_path)
         
-        # إرسال المطالبة المحسنة للمستخدم
-        bot.reply_to(message, improved_prompt)
+        logger.info(f"Audio file created: {speech_file_path}")
+        
+        # إرسال الملف الصوتي للمستخدم
+        with open(speech_file_path, 'rb') as audio:
+            bot.send_voice(message.chat.id, audio)
+        logger.info("Sent audio file to user")
+        
+        # حذف الملف الصوتي بعد الإرسال
+        speech_file_path.unlink()
+        logger.info("Deleted audio file")
+        
     except Exception as e:
+        logger.error(f"Error occurred: {str(e)}", exc_info=True)
         bot.reply_to(message, f"عذرًا، حدث خطأ أثناء معالجة طلبك: {str(e)}")
 
 # تشغيل البوت
 if __name__ == '__main__':
+    logger.info("Starting bot polling")
     bot.polling()
