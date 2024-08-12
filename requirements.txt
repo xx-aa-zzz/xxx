@@ -1,3 +1,2 @@
-python-telegram-bot
-requests
-gemini_python_api
+pyTelegramBotAPI
+openai
